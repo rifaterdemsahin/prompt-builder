@@ -5,31 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Prompt Orchestrator</title>
     <style>
-        :root {
-            --primary: #4a90e2;
-            --bg: #f4f7f6;
-            --text: #333;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
+        :root { --primary: #4a90e2; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { border-bottom: 2px solid var(--primary); padding-bottom: 10px; color: var(--primary); }
-        
+        h2 { border-bottom: 2px solid var(--primary); padding-bottom: 10px; color: var(--primary); margin-top: 0; }
         .input-group { margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; box-sizing: border-box; }
-        
-        .output-box { background: #f9f9f9; border: 2px dashed var(--primary); padding: 20px; border-radius: 8px; margin-top: 30px; position: relative; }
-        #finalPrompt { white-space: pre-wrap; font-style: italic; color: #222; }
-        
+        textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; box-sizing: border-box; transition: border 0.2s; }
+        textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 5px rgba(74, 144, 226, 0.3); }
+        .output-box { background: #f9f9f9; border: 2px dashed var(--primary); padding: 20px; border-radius: 8px; margin-top: 30px; }
+        #finalPrompt { white-space: pre-wrap; font-style: italic; color: #222; min-height: 50px; }
         .button-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        .btn { padding: 10px 18px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; transition: opacity 0.2s; }
+        .btn { padding: 10px 18px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 14px; }
         .btn-copy { background: #27ae60; color: white; }
+        .btn-clear { background: #e74c3c; color: white; }
         .btn-chatgpt { background: #10a37f; color: white; }
         .btn-gemini { background: #1a73e8; color: white; }
-        .btn-grok { background: #000000; color: white; }
-        .btn:hover { opacity: 0.8; }
-
-        .links-title { margin-top: 20px; font-size: 0.9em; color: #666; }
+        .btn-grok { background: #000; color: white; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .links-title { margin-top: 25px; font-size: 0.85em; color: #888; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -39,28 +33,29 @@
     
     <div class="input-group">
         <label>Goal</label>
-        <textarea id="goal" rows="3" placeholder="What is the purpose?"></textarea>
+        <textarea id="goal" rows="3"></textarea>
     </div>
 
     <div class="input-group">
         <label>Content</label>
-        <textarea id="content" rows="4" placeholder="Specific details or concepts..."></textarea>
+        <textarea id="content" rows="4"></textarea>
     </div>
 
     <div class="input-group">
         <label>Style</label>
-        <textarea id="style" rows="3" placeholder="Format, lighting, or tone..."></textarea>
+        <textarea id="style" rows="5"></textarea>
     </div>
 
     <div class="output-box">
-        <label style="color: var(--primary);">Live Output</label>
+        <label style="color: var(--primary);">Live Result</label>
         <div id="finalPrompt"></div>
         <div class="button-row">
             <button class="btn btn-copy" onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button class="btn btn-clear" onclick="clearFields()">Clear All</button>
         </div>
     </div>
 
-    <div class="links-title">Open in:</div>
+    <div class="links-title">Quick Launch AI</div>
     <div class="button-row">
         <a href="https://chat.openai.com" target="_blank" class="btn btn-chatgpt">ChatGPT</a>
         <a href="https://gemini.google.com" target="_blank" class="btn btn-gemini">Gemini</a>
@@ -74,28 +69,41 @@
     const styleInput = document.getElementById('style');
     const output = document.getElementById('finalPrompt');
 
-    // Check URL for "type=image"
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
+        
         if (urlParams.get('type') === 'image') {
             goalInput.value = "Act as a professional video production artist. Create a photorealistic, high-quality 1080p (16:9) background image for an instructional AI education video.";
-            contentInput.value = "Concept: [ Wait For my instructions]";
-            styleInput.value = "Composition Rule: Strict rule of thirds — the figure and spiral occupy the left two-thirds of the frame. The right third must be clean negative space — soft gradient background only, no objects — reserved for overlaying instructional text, bullet points, and titles in post-production. \n\nTechnical Specs: Photorealistic rendering, 16:9 aspect ratio, 1920×1080px, cinematic lighting, no text or watermarks in the image. Now Create image";
+            contentInput.value = "Concept: ";
+            styleInput.value = "Composition Rule: Strict rule of thirds — the figure and spiral occupy the left two-thirds of the frame. The right third must be clean negative space — soft gradient background only, no objects — reserved for overlaying instructional text, bullet points, and titles in post-production.\n\nTechnical Specs: Photorealistic rendering, 16:9 aspect ratio, 1920×1080px, cinematic lighting, no text or watermarks in the image. Now Create image";
+            
+            // Focus and set cursor to the end of "Concept: "
+            contentInput.focus();
+            const val = contentInput.value;
+            contentInput.setSelectionRange(val.length, val.length);
         }
         updateOutput();
     };
 
     function updateOutput() {
-        const fullPrompt = `${goalInput.value}\n\n${contentInput.value}\n\n${styleInput.value}`.trim();
+        const fullPrompt = [goalInput.value, contentInput.value, styleInput.value]
+            .filter(v => v.trim() !== "")
+            .join("\n\n");
         output.innerText = fullPrompt;
     }
 
     function copyToClipboard() {
         navigator.clipboard.writeText(output.innerText);
-        alert("Prompt copied to clipboard!");
+        const copyBtn = document.querySelector('.btn-copy');
+        copyBtn.innerText = "Copied!";
+        setTimeout(() => copyBtn.innerText = "Copy to Clipboard", 2000);
     }
 
-    // Event Listeners for real-time typing
+    function clearFields() {
+        [goalInput, contentInput, styleInput].forEach(i => i.value = "");
+        updateOutput();
+    }
+
     [goalInput, contentInput, styleInput].forEach(el => {
         el.addEventListener('input', updateOutput);
     });
